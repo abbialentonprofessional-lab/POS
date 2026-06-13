@@ -43,20 +43,34 @@ button{
 <h2>Tablet POS</h2>
 
 <button onclick="newOrder()">New Order</button>
+<button onclick="exportCSV()">Export Sales</button>
 
 <div id="orders"></div>
 
 <script>
 
-const menu = [
-    {name:"Burger",price:120},
-    {name:"Fries",price:60},
-    {name:"Hotdog",price:80},
-    {name:"Chicken",price:150},
-    {name:"Coke",price:40}
-];
+const menu = {
+    "Rice Meals":[
+        {name:"Chicken Meal",price:150},
+        {name:"Pork BBQ Meal",price:130},
+        {name:"Burger Steak",price:120}
+    ],
 
-let orders=[];
+    "Snacks":[
+        {name:"Fries",price:60},
+        {name:"Hotdog",price:80},
+        {name:"Burger",price:120}
+    ],
+
+    "Drinks":[
+        {name:"Coke",price:40},
+        {name:"Sprite",price:40},
+        {name:"Iced Tea",price:50}
+    ]
+};
+
+let orders = JSON.parse(localStorage.getItem("orders") || "[]");
+
 
 function newOrder(){
     orders.push({
@@ -64,30 +78,86 @@ function newOrder(){
         items:[],
         paid:false
     });
+    saveOrders();
     render();
 }
 
-function addItem(orderId,index){
-    const order=orders.find(o=>o.id===orderId);
-    order.items.push({
-        name:menu[index].name,
-        price:menu[index].price,
-        served:false
-    });
-    render();
-}
 
 function toggleServed(orderId,itemIndex){
     const order=orders.find(o=>o.id===orderId);
     order.items[itemIndex].served=!order.items[itemIndex].served;
+    saveOrders();
     render();
 }
 
 function markPaid(orderId){
     const order=orders.find(o=>o.id===orderId);
     order.paid=true;
+    saveOrders();
     render();
 }
+
+function saveOrders(){
+    localStorage.setItem("orders",JSON.stringify(orders));
+}
+
+function exportCSV(){
+
+    let csv="Customer,Item,Price\n";
+
+    orders.forEach((order,index)=>{
+
+        order.items.forEach(item=>{
+
+            csv += `${index+1},${item.name},${item.price}\n`;
+
+        });
+
+    });
+
+    let blob=new Blob([csv],{type:"text/csv"});
+    let a=document.createElement("a");
+
+    a.href=URL.createObjectURL(blob);
+    a.download="sales.csv";
+    a.click();
+}
+
+function computeChange(orderId, total){
+
+    const cashInput = document.getElementById('cash' + orderId);
+    const changeBox = document.getElementById('change' + orderId);
+
+    let cash = parseFloat(cashInput.value) || 0;
+
+    let change = cash - total;
+
+    changeBox.innerHTML = `
+        <strong>Change:</strong> ₱${Math.max(0, change)}
+    `;
+}
+
+function selectItem(orderId,value){
+
+    if(!value) return;
+
+    let [category,index]=value.split("|");
+
+    let item=menu[category][index];
+
+    let order=orders.find(o=>o.id===orderId);
+
+    order.items.push({
+        name:item.name,
+        price:item.price,
+        served:false
+    });
+
+    saveOrders();
+    render();
+}
+
+saveOrders();
 
 function render(){
 
@@ -108,38 +178,60 @@ function render(){
         div.innerHTML=`
             <h3>Customer ${idx+1}</h3>
 
+            <div>
+Items Ordered:
+<ul>
+${order.items.map(item=>
+`<li>${item.name} - ₱${item.price}</li>`
+).join("")}
+</ul>
+</div>
+
             <strong>Add Item:</strong><br>
-            ${menu.map((m,i)=>
-            `<button onclick="addItem(${order.id},${i})">
-                ${m.name} ₱${m.price}
-            </button>`).join("")}
+           <select onchange="selectItem(${order.id},this.value)">
+<option value="">Select Item</option>
 
-            <hr>
+${Object.keys(menu).map(category=>`
 
-            ${order.items.map((item,i)=>`
-                <div class="item ${item.served?'served':''}">
-                    <span>
-                        ${item.name} - ₱${item.price}
-                    </span>
-                    <button onclick="toggleServed(${order.id},${i})">
-                        ${item.served?'Served ✓':'Serve'}
-                    </button>
-                </div>
-            `).join("")}
+<optgroup label="${category}">
 
-            <hr>
+${menu[category].map((item,index)=>
+
+`<option value="${category}|${index}">
+${item.name} - ₱${item.price}
+</option>`
+
+).join("")}
+
+</optgroup>
+
+`).join("")}
+
+</select>
+
+
+
+         
 
             <h4>Total: ₱${total}</h4>
 
             Amount Given:
             <input type="number" id="cash${order.id}" value="0">
 
-            <button onclick="
-                let cash=parseFloat(document.getElementById('cash${order.id}').value)||0;
-                alert('Change: ₱'+(cash-total));
+            <button onclick="let cash=parseFloat(document.getElementById('cash${order.id}').value)||0;
+                document.getElementById('change${order.id}')
+                .innerHTML='Change: ₱'+Math.max(0, cash-total);
+
             ">
-            Compute Change
-            </button>
+            
+            <button onclick="computeChange(${order.id}, ${total})">
+    Compute Change
+</button>
+
+<div id="change${order.id}"></div>
+
+
+            <div id="change${order.id}"></div>
 
             <button onclick="markPaid(${order.id})">
                 Mark Paid
