@@ -179,59 +179,55 @@ function render(){
             <h3>Customer ${idx+1}</h3>
 
             <div>
-Items Ordered:
-<ul>
-${order.items.map(item=>
-`<li>${item.name} - ₱${item.price}</li>`
-).join("")}
-</ul>
-</div>
+                Items Ordered:
+                <ul>
+                    ${order.items.map(item=>
+                        `<li>${item.name} - ₱${item.price}</li>`
+                    ).join("")}
+                </ul>
+            </div>
 
             <strong>Add Item:</strong><br>
-           <select onchange="selectItem(${order.id},this.value)">
-<option value="">Select Item</option>
 
-${Object.keys(menu).map(category=>`
+            <select onchange="selectItem(${order.id},this.value)">
+                <option value="">Select Item</option>
 
-<optgroup label="${category}">
-
-${menu[category].map((item,index)=>
-
-`<option value="${category}|${index}">
-${item.name} - ₱${item.price}
-</option>`
-
-).join("")}
-
-</optgroup>
-
-`).join("")}
-
-</select>
-
-
-
-         
+                ${Object.keys(menu).map(category=>
+                    `
+                    <optgroup label="${category}">
+                        ${menu[category].map((item,index)=>
+                            `<option value="${category}|${index}">
+                                ${item.name} - ₱${item.price}
+                            </option>`
+                        ).join("")}
+                    </optgroup>
+                    `
+                ).join("")}
+            </select>
 
             <h4>Total: ₱${total}</h4>
 
-            Amount Given:
             <input type="number" id="cash${order.id}" value="0">
 
-            <button onclick="let cash=parseFloat(document.getElementById('cash${order.id}').value)||0;
-                document.getElementById('change${order.id}')
-                .innerHTML='Change: ₱'+Math.max(0, cash-total);
-
-            ">
-            
             <button onclick="computeChange(${order.id}, ${total})">
-    Compute Change
-</button>
-
-<div id="change${order.id}"></div>
-
+                Compute Change
+            </button>
 
             <div id="change${order.id}"></div>
+
+            <hr>
+
+            ${order.items.map((item,i)=>`
+                <div class="item ${item.served?'served':''}">
+                    <span>${item.name} - ₱${item.price}</span>
+
+                    <button onclick="toggleServed(${order.id},${i})">
+                        ${item.served?'Served ✓':'Serve'}
+                    </button>
+                </div>
+            `).join("")}
+
+            <hr>
 
             <button onclick="markPaid(${order.id})">
                 Mark Paid
