@@ -16,6 +16,28 @@ button{
     margin:5px;
     font-size:16px;
 }
+.toolbar{
+    position:sticky;
+    top:0;
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:5px;
+    background:#f5f5f5;
+    padding:10px 0;
+    z-index:1000;
+}
+
+.toolbar button{
+    flex:1;
+    min-width:120px;
+    font-size:16px;
+    font-weight:bold;
+}
+
+.toolbar button:last-child{
+    background:#dc3545;
+    color:white;
+}
 .order{
     background:white;
     padding:10px;
@@ -35,6 +57,11 @@ button{
     justify-content:space-between;
     margin:4px 0;
 }
+.remove-btn{
+    background:#dc3545;
+    color:white;
+    border:none;
+}
 </style>
 </head>
 
@@ -42,8 +69,12 @@ button{
 
 <h2>Tablet POS</h2>
 
-<button onclick="newOrder()">New Order</button>
-<button onclick="exportCSV()">Export Sales</button>
+<div class="toolbar">
+    <button onclick="newOrder()">➕ New Order</button>
+    <button onclick="exportCSV()">📊 Sales</button>
+    <button onclick="exportAuditReport()">📝 Audit</button>
+    <button onclick="clearAllOrders()">🗑 Clear All</button>
+</div>
 
 <div id="orders"></div>
 
@@ -71,13 +102,25 @@ const menu = {
 
 let orders = JSON.parse(localStorage.getItem("orders") || "[]");
 
+let transactionLog = JSON.parse(
+    localStorage.getItem("transactionLog") || "[]"
+);
+
+function saveTransactionLog(){
+    localStorage.setItem(
+        "transactionLog",
+        JSON.stringify(transactionLog)
+    );
+}
+
 
 function newOrder(){
     orders.push({
-        id:Date.now(),
-        items:[],
-        paid:false
-    });
+    id:Date.now(),
+    customerName:"",
+    items:[],
+    paid:false
+});
     saveOrders();
     render();
 }
@@ -90,10 +133,42 @@ function toggleServed(orderId,itemIndex){
     render();
 }
 
-function markPaid(orderId){
-    const order=orders.find(o=>o.id===orderId);
-    order.paid=true;
+function removeItem(orderId,itemIndex){
+
+    const order = orders.find(o => o.id === orderId);
+
+    const removedItem = order.items[itemIndex];
+
+    transactionLog.push({
+        orderId: order.id,
+        action: "REMOVE_ITEM",
+        item: removedItem.name,
+        price: removedItem.price,
+        timestamp: new Date().toISOString()
+    });
+
+    order.items.splice(itemIndex,1);
+
     saveOrders();
+    saveTransactionLog();
+    render();
+}
+
+function markPaid(orderId){
+
+    const order = orders.find(o => o.id === orderId);
+
+    order.paid = !order.paid;
+
+    transactionLog.push({
+        orderId: order.id,
+        action: order.paid ? "PAID" : "UNDO_PAID",
+        timestamp: new Date().toISOString(),
+        total: order.items.reduce((a,b)=>a+b.price,0)
+    });
+
+    saveOrders();
+    saveTransactionLog();
     render();
 }
 
@@ -121,6 +196,59 @@ function exportCSV(){
     a.href=URL.createObjectURL(blob);
     a.download="sales.csv";
     a.click();
+}
+
+function exportAuditReport(){
+    
+
+    let csv =
+    "Date,Order ID,Action,Item,Price,Total\n";
+
+    transactionLog.forEach(log => {
+
+        csv +=
+        `${log.timestamp},` +
+        `${log.orderId},` +
+        `${log.action},` +
+        `${log.item || ""},` +
+        `${log.price || ""},` +
+        `${log.total || ""}\n`;
+
+    });
+
+    let blob = new Blob([csv],{
+        type:"text/csv"
+    });
+
+    let a = document.createElement("a");
+
+    a.href = URL.createObjectURL(blob);
+    a.download = "audit_report.csv";
+    a.click();
+}
+
+function clearAllOrders(){
+
+    if(!confirm("Clear all orders?")){
+        return;
+    }
+
+    exportAuditReport();
+
+    localStorage.setItem(
+        "audit_" + Date.now(),
+        JSON.stringify(transactionLog)
+    );
+
+    orders.length = 0;
+    transactionLog.length = 0;
+
+    saveOrders();
+    saveTransactionLog();
+
+    render();
+
+    alert("All orders cleared.");
 }
 
 function computeChange(orderId, total){
@@ -157,6 +285,15 @@ function selectItem(orderId,value){
     render();
 }
 
+function updateCustomerName(orderId, value){
+
+    const order = orders.find(o => o.id === orderId);
+
+    order.customerName = value;
+
+    saveOrders();
+}
+
 saveOrders();
 
 function render(){
@@ -176,16 +313,19 @@ function render(){
         }
 
         div.innerHTML=`
-            <h3>Customer ${idx+1}</h3>
+       <h3>
+    ${order.customerName?.trim()
+        ? `${order.customerName} (Order #${order.id})`
+        : `Order #${order.id}`
+    }
+</h3>
 
-            <div>
-                Items Ordered:
-                <ul>
-                    ${order.items.map(item=>
-                        `<li>${item.name} - ₱${item.price}</li>`
-                    ).join("")}
-                </ul>
-            </div>
+<input
+    type="text"
+    placeholder="Customer Name (Optional)"
+    value="${order.customerName || ''}"
+    onchange="updateCustomerName(${order.id}, this.value)"
+>
 
             <strong>Add Item:</strong><br>
 
@@ -205,6 +345,27 @@ function render(){
                 ).join("")}
             </select>
 
+              <hr>
+
+         ${order.items.map((item,i)=>`
+    <div class="item ${item.served?'served':''}">
+        <span>${item.name} - ₱${item.price}</span>
+
+        <div>
+            <button onclick="toggleServed(${order.id},${i})">
+                ${item.served ? 'Served ✓' : 'Serve'}
+            </button>
+
+            <button class="remove-btn"
+        onclick="removeItem(${order.id},${i})">
+    Remove
+</button>
+        </div>
+    </div>
+`).join("")}
+
+            <hr>
+
             <h4>Total: ₱${total}</h4>
 
             <input type="number" id="cash${order.id}" value="0">
@@ -215,23 +376,11 @@ function render(){
 
             <div id="change${order.id}"></div>
 
-            <hr>
-
-            ${order.items.map((item,i)=>`
-                <div class="item ${item.served?'served':''}">
-                    <span>${item.name} - ₱${item.price}</span>
-
-                    <button onclick="toggleServed(${order.id},${i})">
-                        ${item.served?'Served ✓':'Serve'}
-                    </button>
-                </div>
-            `).join("")}
-
-            <hr>
+          
 
             <button onclick="markPaid(${order.id})">
-                Mark Paid
-            </button>
+    ${order.paid ? 'Undo Paid' : 'Mark Paid'}
+</button>
         `;
 
         container.appendChild(div);
