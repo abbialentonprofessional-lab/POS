@@ -62,6 +62,13 @@ button{
     color:white;
     border:none;
 }
+input[type=text] {
+  width: 30%;
+  padding: 12px;
+  margin: 10px 0;
+  box-sizing: border-box;
+}
+
 </style>
 </head>
 
@@ -251,18 +258,37 @@ function clearAllOrders(){
     alert("All orders cleared.");
 }
 
-function computeChange(orderId, total){
+function computeChange(orderId,total){
 
-    const cashInput = document.getElementById('cash' + orderId);
-    const changeBox = document.getElementById('change' + orderId);
+    const cashInput =
+        document.getElementById(
+            "cash"+orderId
+        );
 
-    let cash = parseFloat(cashInput.value) || 0;
+    const changeBox =
+        document.getElementById(
+            "change"+orderId
+        );
 
-    let change = cash - total;
+    let cash =
+        Number(cashInput.value);
 
-    changeBox.innerHTML = `
-        <strong>Change:</strong> ₱${Math.max(0, change)}
-    `;
+    if(isNaN(cash) || cash <= 0){
+        changeBox.innerHTML =
+            "<strong>Enter valid cash</strong>";
+        return;
+    }
+
+    let change =
+        cash-total;
+
+    changeBox.innerHTML =
+        `
+        <strong>
+        Change:
+        ₱${change.toFixed(2)}
+        </strong>
+        `;
 }
 
 function selectItem(orderId,value){
@@ -296,6 +322,30 @@ function updateCustomerName(orderId, value){
 
 saveOrders();
 
+function saveCustomerName(orderId){
+
+    const input =
+        document.getElementById(
+            "customer" + orderId
+        );
+
+    const order =
+        orders.find(
+            o => o.id === orderId
+        );
+
+    if(!order) return;
+
+    order.customerName =
+        input.value.trim();
+
+    saveOrders();
+
+    render();
+
+
+}
+
 function render(){
 
     const container=document.getElementById("orders");
@@ -322,12 +372,18 @@ function render(){
 
 <input
     type="text"
+    id="customer${order.id}"
     placeholder="Customer Name (Optional)"
     value="${order.customerName || ''}"
-    onchange="updateCustomerName(${order.id}, this.value)"
 >
 
-            <strong>Add Item:</strong><br>
+<button onclick="saveCustomerName(${order.id})">
+    Save Name
+</button>
+
+<br><br>
+
+            <strong>Add Item:</strong><br><br>
 
             <select onchange="selectItem(${order.id},this.value)">
                 <option value="">Select Item</option>
@@ -369,6 +425,7 @@ function render(){
             <h4>Total: ₱${total}</h4>
 
             <input type="number" id="cash${order.id}" value="0">
+            
 
             <button onclick="computeChange(${order.id}, ${total})">
                 Compute Change
