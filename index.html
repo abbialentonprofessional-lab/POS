@@ -38,13 +38,7 @@ button{
     background:#dc3545;
     color:white;
 }
-/* .order{
-    background:white;
-    padding:10px;
-    margin-bottom:10px;
-    border-radius:8px;
-    border-left:5px solid #007bff;
-} */
+
 
 .order{
     background:white;
@@ -58,10 +52,7 @@ button{
 
     border-left:5px solid #007bff;
 }
-/* .paid{
-    border-left-color:green;
-    background:#eafbea;
-} */
+
  .paid{
     border:2px solid #28a745;
     border-left:6px solid #28a745;
@@ -92,13 +83,23 @@ input[type=text] {
     border:none;
 }
 
+select{
+    padding:8px;
+    margin-left:5px;
+}
 
-/* .action-buttons button{
-    padding:4px 10px;   /* bawas height */
-    font-size:13px;
-    min-height:28px;
-    line-height:1;
-} */
+.cash-area{
+    display:flex;
+    gap:6px;
+    align-items:center;
+    flex-wrap:wrap;
+}
+
+.cash-area input{
+    width:120px;
+}
+
+
 
 </style>
 </head>
@@ -377,6 +378,31 @@ function saveCustomerName(orderId){
 
 }
 
+function setCashOption(orderId, value){
+
+    if(!value) return;
+
+    document.getElementById(
+        "cash"+orderId
+    ).value = value;
+
+}
+
+function setCashOption(orderId, value){
+
+    if(!value) return;
+
+    const input =
+        document.getElementById(
+            "cash"+orderId
+        );
+
+    input.value = value;
+
+    input.focus();
+
+}
+
 function render(){
 
     const container=document.getElementById("orders");
@@ -456,16 +482,47 @@ function render(){
 
             <h4>Total: ₱${total}</h4>
 
-            <input type="number" id="cash${order.id}" value="0">
-            
 
-            <button onclick="computeChange(${order.id}, ${total})">
-                Compute Change
-            </button>
 
-            <div id="change${order.id}"></div>
+     <div class="cash-area">
 
-          
+<input
+    type="number"
+    id="cash${order.id}"
+    placeholder="Enter Custom Amount"
+>
+
+<select
+    onchange="setCashOption(${order.id}, this.value)"
+>
+    <option value="">
+        Cash Options
+    </option>
+
+    <option value="${total}">
+        Exact Amount
+    </option>
+
+    <option value="100">₱100</option>
+    <option value="200">₱200</option>
+    <option value="500">₱500</option>
+    <option value="1000">₱1000</option>
+    <option value="2000">₱2000</option>
+
+</select>
+
+<button
+onclick="
+computeChange(
+${order.id},
+${total}
+)">
+Compute Change
+</button>
+
+</div>
+
+<div id="change${order.id}"></div>
 
             <button onclick="markPaid(${order.id})">
     ${order.paid ? 'Undo Paid' : 'Mark Paid'}
