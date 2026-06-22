@@ -110,18 +110,23 @@ gap:8px;
 }
 
 .menu-item-btn{
-background:white;
+background:rgb(198, 228, 237);
 border:2px solid #080c68;
-border-radius:10px;
-padding:12px;
-min-height:70px;
+border-radius:8px;
+padding:6px;
+min-height:45px;
 
 display:flex;
 flex-direction:column;
 justify-content:center;
 
-font-size:13px;
+font-size:11px;
 font-weight:bold;
+line-height:1.1;
+
+transition:.2s;
+
+margin:2px;
 }
 
 .menu-item-btn:hover{
@@ -132,6 +137,92 @@ background:#e8ecff;
 font-size:12px;
 color:#444;
 margin-top:5px;
+}
+
+.modal{
+display:none;
+position:fixed;
+
+top:0;
+left:0;
+
+width:100%;
+height:100%;
+
+background:rgba(0,0,0,.45);
+
+z-index:9999;
+}
+
+.modal-content{
+
+background:white;
+
+margin:5% auto;
+
+width:92%;
+max-height:85vh;
+
+overflow:auto;
+
+padding:15px;
+
+border-radius:12px;
+
+}
+
+.close-modal{
+float:right;
+
+background:#dc3545;
+color:white;
+
+border:none;
+}
+
+.menu-grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:10px;
+}
+
+.menu-item-btn{
+
+border:2px solid #080c68;
+
+background:white;
+
+border-radius:10px;
+
+padding:12px;
+
+min-height:75px;
+
+transition:.2s;
+}
+
+.menu-item-btn.selected{
+
+background:#4caf50;
+
+color:white;
+
+border-color:#2e7d32;
+
+transform:scale(.96);
+
+}
+
+.open-menu-btn{
+
+background:#080c68;
+
+color:white;
+
+border:none;
+
+border-radius:8px;
+
 }
 
 </style>
@@ -150,7 +241,11 @@ margin-top:5px;
 
 <div id="orders"></div>
 
+
+
 <script>
+
+    let selectedItems = {};
 
 const menu = {
     "Rice Meals":[
@@ -472,6 +567,91 @@ function setCashOption(orderId, value){
 
 }
 
+function addSelectedItems(
+orderId
+){
+
+const order =
+orders.find(
+o=>o.id===orderId
+);
+
+const selected =
+selectedItems[orderId]
+|| [];
+
+selected.forEach(v=>{
+
+const [
+category,
+index
+]=v.split("|");
+
+const item =
+menu[category][index];
+
+order.items.push({
+
+name:item.name,
+
+price:item.price,
+
+served:false
+
+});
+
+});
+
+selectedItems[orderId]=[];
+
+saveOrders();
+
+closeMenu(orderId);
+
+render();
+
+}
+
+function openMenu(orderId){
+
+document
+.getElementById(
+"menuModal"+orderId
+)
+.style.display="block";
+
+}
+
+function closeMenu(orderId){
+
+document
+.getElementById(
+"menuModal"+orderId
+)
+.style.display="none";
+
+}
+
+function selectItemPopup(orderId, category, index, btn){
+
+    const key = category + "|" + index;
+
+    if(!selectedItems[orderId]){
+        selectedItems[orderId] = [];
+    }
+
+    const list = selectedItems[orderId];
+
+    if(list.includes(key)){
+        selectedItems[orderId] = list.filter(x => x !== key);
+        btn.classList.remove("selected");
+    }else{
+        list.push(key);
+        btn.classList.add("selected");
+    }
+}
+
+
 function render(){
 
     const container=document.getElementById("orders");
@@ -496,6 +676,81 @@ function render(){
     }
 </h3>
 
+<button
+class="open-menu-btn"
+onclick="
+openMenu(${order.id})
+"
+>
+🍔 Add Items
+</button>
+
+<div
+class="modal"
+id="menuModal${order.id}"
+>
+
+<div class="modal-content">
+<br>
+
+<button onclick="addSelectedItems(${order.id})">
+    ✅ Add Selected Items
+</button>
+
+<button
+class="close-modal"
+onclick="
+closeMenu(${order.id})
+"
+>
+✖ Close
+</button>
+
+<h3>Select Item</h3>
+
+${Object.keys(menu).map(category=>`
+
+<h4>${category}</h4>
+
+<div class="menu-grid">
+
+${menu[category].map((item,index)=>`
+
+<button
+
+class="menu-item-btn"
+
+onclick="
+selectItemPopup(
+${order.id},
+'${category}',
+${index},
+this
+)
+"
+
+>
+
+${item.name}
+
+<br>
+
+<small>
+₱${item.price}
+</small>
+
+</button>
+
+`).join("")}
+
+</div>
+
+`).join("")}
+
+</div>
+
+</div>
+
 <input
     type="text"
     id="customer${order.id}"
@@ -507,47 +762,9 @@ function render(){
     Save Name
 </button>
 
-<br><br>
 
-            <strong>Add Item:</strong><br><br>
 
-            <strong>Add Item:</strong>
 
-<div class="menu-buttons">
-
-${Object.keys(menu).map(category=>`
-
-<div class="menu-category">
-
-<h4>${category}</h4>
-
-<div class="menu-grid">
-
-${menu[category].map((item,index)=>`
-
-<button
-type="button"
-class="menu-item-btn"
-onclick="selectItem(${order.id},'${category}|${index}')"
->
-
-<div>${item.name}</div>
-
-<small>₱${item.price}</small>
-
-</button>
-
-`).join("")}
-
-</div>
-
-</div>
-
-`).join("")}
-
-</div>
-
-    
 
               <hr>
 
