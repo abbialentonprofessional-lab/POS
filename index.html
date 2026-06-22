@@ -99,7 +99,40 @@ select{
     width:120px;
 }
 
+.menu-category{
+margin-top:10px;
+}
 
+.menu-grid{
+display:grid;
+grid-template-columns:repeat(3,1fr);
+gap:8px;
+}
+
+.menu-item-btn{
+background:white;
+border:2px solid #080c68;
+border-radius:10px;
+padding:12px;
+min-height:70px;
+
+display:flex;
+flex-direction:column;
+justify-content:center;
+
+font-size:13px;
+font-weight:bold;
+}
+
+.menu-item-btn:hover{
+background:#e8ecff;
+}
+
+.menu-item-btn small{
+font-size:12px;
+color:#444;
+margin-top:5px;
+}
 
 </style>
 </head>
@@ -123,46 +156,45 @@ const menu = {
     "Rice Meals":[
         {name:"Sisig w/ Egg & Rice",price:75},
         {name:"Sizzling Meals Half Rice",price:65},
-        {name:"Sizzling Meals Whole Rice",price:75}
-        {name:"Tapa w/ Egg & Rice",price:75}
-        {name:"Tocino w/ Egg & Rice",price:75}
-        {name:"Bacon w/ Egg & Rice",price:75}
-        {name:"Cordon Bleu w/ Rice",price:75}
-        {name:"Chickenn Fillet w/ Rice",price:75}
-        {name:"Liemppo w/ Rice",price:75}
-        {name:"BBQ w/ Rice",price:75}
-        {name:"Chicken Katsu w/ Rice",price:75}
-        {name:"Hotdog w/ Rice,price:45}
-        {name:"Siomai w/ Rice",price:45}
-        {name:"Fried Siomai w/ Rice",price:50}
-        {name:"Egg w/ Rice",price:35}
-        {name:"Hotdog & Egg w/ Rice",price:60}
-        {name:"Rice in Cup/Plate",price:20}
-        {name:"Sizzling Meals No Rice or No Egg",price:65}
-        {name:"Fried Egg Only",price:15}
+        {name:"Sizzling Meals Whole Rice",price:75},
+        {name:"Tapa w/ Egg & Rice",price:75},
+        {name:"Tocino w/ Egg & Rice",price:75},
+        {name:"Bacon w/ Egg & Rice",price:75},
+        {name:"Cordon Bleu w/ Rice",price:75},
+        {name:"Chickenn Fillet w/ Rice",price:75},
+        {name:"Liemppo w/ Rice",price:75},
+        {name:"BBQ w/ Rice",price:75},
+        {name:"Chicken Katsu w/ Rice",price:75},
+        {name:"Siomai w/ Rice",price:45},
+        {name:"Fried Siomai w/ Rice",price:50},
+        {name:"Egg w/ Rice",price:35},
+        {name:"Hotdog & Egg w/ Rice",price:60},
+        {name:"Rice in Cup/Plate",price:20},
+        {name:"Sizzling Meals No Rice or No Egg",price:65},
+        {name:"Fried Egg Only",price:15},
         {name:"Fried Hotdog TJ Only",price:25}
-        
+],
 
     "Snacks":[
         {name:"Regular Burger",price:25},
         {name:"Egg Sandwich",price:30},
-        {name:"Hotdog Sandwich",price:35}
-    ],{name:"Davids Siomai",price:30}
-{name:"Fried Siomai",price:35}
-{name:"Davids Siopao Big",price:30}
-{name:"Fries Small",price:35}
-{name:"Fries Medium",price:65}
-{name:"Fries Large",price:95}
-{name:"Fries & Drinks",price:55}
-{name:"Fries w/ Drinks & Hotdog",price:70}
-{name:"Fries w/ Drinks & Siomai",price:70}
-{name:"Fries w/ Drinks & Nuggets",price:70}
+        {name:"Hotdog Sandwich",price:35},
+    {name:"Davids Siomai",price:30},
+{name:"Fried Siomai",price:35},
+{name:"Davids Siopao Big",price:30},
+{name:"Fries Small",price:35},
+{name:"Fries Medium",price:65},
+{name:"Fries Large",price:95},
+{name:"Fries & Drinks",price:55},
+{name:"Fries w/ Drinks & Hotdog",price:70},
+{name:"Fries w/ Drinks & Siomai",price:70},
+{name:"Fries w/ Drinks & Nuggets",price:70},
 
 
-{name:"Fries & Drinks",price:55}
+{name:"Fries & Drinks",price:55},
 {name:"Hotdog Sandwich",price:35}
 
-
+],
      "BIscuits and Chocolates":[
         {name:"Fries",price:60},
         {name:"Hotdog",price:80},
@@ -479,21 +511,43 @@ function render(){
 
             <strong>Add Item:</strong><br><br>
 
-            <select onchange="selectItem(${order.id},this.value)">
-                <option value="">Select Item</option>
+            <strong>Add Item:</strong>
 
-                ${Object.keys(menu).map(category=>
-                    `
-                    <optgroup label="${category}">
-                        ${menu[category].map((item,index)=>
-                            `<option value="${category}|${index}">
-                                ${item.name} - ₱${item.price}
-                            </option>`
-                        ).join("")}
-                    </optgroup>
-                    `
-                ).join("")}
-            </select>
+<div class="menu-buttons">
+
+${Object.keys(menu).map(category=>`
+
+<div class="menu-category">
+
+<h4>${category}</h4>
+
+<div class="menu-grid">
+
+${menu[category].map((item,index)=>`
+
+<button
+type="button"
+class="menu-item-btn"
+onclick="selectItem(${order.id},'${category}|${index}')"
+>
+
+<div>${item.name}</div>
+
+<small>₱${item.price}</small>
+
+</button>
+
+`).join("")}
+
+</div>
+
+</div>
+
+`).join("")}
+
+</div>
+
+    
 
               <hr>
 
