@@ -104,39 +104,52 @@ margin-top:10px;
 }
 
 .menu-grid{
+
 display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:8px;
+
+grid-template-columns:
+repeat(4,1fr);
+
+gap:6px;
+
+align-items:stretch;
+
 }
 
-.menu-item-btn{
-background:rgb(198, 228, 237);
-border:2px solid #080c68;
-border-radius:8px;
-padding:6px;
-min-height:45px;
+/* .menu-item-btn{
 
-display:flex;
-flex-direction:column;
-justify-content:center;
+border:1px solid #080c68;
+
+background:rgb(163, 67, 67);
+
+border-radius:8px;
+
+padding:6px;
+
+min-height:55px;
 
 font-size:11px;
-font-weight:bold;
+
 line-height:1.1;
 
 transition:.2s;
 
-margin:2px;
-}
+margin:0;
+
+} */
 
 .menu-item-btn:hover{
 background:#e8ecff;
 }
 
 .menu-item-btn small{
-font-size:12px;
-color:#444;
-margin-top:5px;
+
+font-size:9px;
+
+display:block;
+
+margin-top:2px;
+
 }
 
 .modal{
@@ -158,16 +171,93 @@ z-index:9999;
 
 background:white;
 
-margin:5% auto;
+margin:3% auto;
 
-width:92%;
-max-height:85vh;
+width:95%;
 
-overflow:auto;
+height:88vh;
 
-padding:15px;
+display:flex;
+
+flex-direction:column;
 
 border-radius:12px;
+
+overflow:hidden;
+
+}
+
+.modal-header{
+
+position:sticky;
+
+top:0;
+
+background:white;
+
+padding:10px;
+
+z-index:20;
+
+border-bottom:1px solid #ddd;
+
+display:flex;
+
+justify-content:space-between;
+
+align-items:center;
+
+}
+
+.modal-body{
+
+flex:1;
+
+overflow-y:auto;
+
+padding:10px;
+
+}
+
+.modal-footer{
+
+position:sticky;
+
+bottom:0;
+
+background:white;
+
+padding:10px;
+
+border-top:1px solid #ddd;
+
+z-index:20;
+
+}
+
+.add-selected-btn{
+
+width:100%;
+
+background:#28a745;
+
+color:white;
+
+border:none;
+
+border-radius:8px;
+
+font-size:14px;
+
+padding:10px;
+
+}
+
+.close-modal{
+
+margin:0;
+
+padding:8px 14px;
 
 }
 
@@ -181,24 +271,38 @@ border:none;
 }
 
 .menu-grid{
+
 display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:10px;
+
+grid-template-columns:
+repeat(4,1fr);
+
+gap:6px;
+
+align-items:stretch;
+
 }
 
 .menu-item-btn{
 
 border:2px solid #080c68;
 
-background:white;
+background:rgb(240, 245, 215);
 
-border-radius:10px;
+border-radius:8px;
 
-padding:12px;
+padding:4px;
 
-min-height:75px;
+min-height:45px;
+
+font-size:13px;
+
+line-height:1.1;
 
 transition:.2s;
+
+margin:0;
+
 }
 
 .menu-item-btn.selected{
@@ -675,12 +779,9 @@ function render(){
         : `Order #${order.id}`
     }
 </h3>
-
 <button
 class="open-menu-btn"
-onclick="
-openMenu(${order.id})
-"
+onclick="openMenu(${order.id})"
 >
 🍔 Add Items
 </button>
@@ -691,22 +792,21 @@ id="menuModal${order.id}"
 >
 
 <div class="modal-content">
-<br>
 
-<button onclick="addSelectedItems(${order.id})">
-    ✅ Add Selected Items
-</button>
+<div class="modal-header">
+
+<h3>Select Item</h3>
 
 <button
 class="close-modal"
-onclick="
-closeMenu(${order.id})
-"
+onclick="closeMenu(${order.id})"
 >
 ✖ Close
 </button>
 
-<h3>Select Item</h3>
+</div>
+
+<div class="modal-body">
 
 ${Object.keys(menu).map(category=>`
 
@@ -716,9 +816,16 @@ ${Object.keys(menu).map(category=>`
 
 ${menu[category].map((item,index)=>`
 
-<button
-
-class="menu-item-btn"
+<button class="menu-item-btn"
+${
+selectedItems[order.id]
+?.includes(category+"|"+index)
+?
+"selected"
+:
+""
+}
+"
 
 onclick="
 selectItemPopup(
@@ -749,6 +856,27 @@ ${item.name}
 
 </div>
 
+<div class="modal-footer">
+
+<button
+class="add-selected-btn"
+
+onclick="
+addSelectedItems(
+${order.id}
+)
+"
+>
+
+✔ Add Selected
+
+</button>
+
+</div>
+
+</div>
+
+</div>
 </div>
 
 <input
